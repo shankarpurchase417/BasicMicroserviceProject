@@ -6,6 +6,8 @@ import com.tcg.order.entity.OrderResponse;
 public interface OrderService {
 
 	OrderResponse createOrder(OrderDto orderdto);
+	
+	String cancelOrder(int orderId);
 
     
         

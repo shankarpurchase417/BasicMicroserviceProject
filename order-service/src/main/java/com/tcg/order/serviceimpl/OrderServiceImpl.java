@@ -11,6 +11,7 @@ import com.tcg.order.dto.ProductDto;
 import com.tcg.order.dto.UserDto;
 import com.tcg.order.entity.Order;
 import com.tcg.order.entity.OrderResponse;
+import com.tcg.order.feign.InventoryFeignClient;
 import com.tcg.order.repository.OrderRepository;
 import com.tcg.order.service.OrderService;
 
@@ -25,6 +26,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderRepository orderRepo;
+    
+    @Autowired
+    private InventoryFeignClient inventoryFeignClient;
 
     @Override
     public OrderResponse createOrder(OrderDto orderdto) {
@@ -81,6 +85,34 @@ public class OrderServiceImpl implements OrderService {
         response.setSubtotal(subtotal);
 
         return response;
+    }
+
+	@Override
+	public String cancelOrder(int orderId) {
+		// 1. Order fetch karo
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // 2. Product ID and Quantity nikalo
+        int productId = order.getProductId();
+        int orderedQty = order.getQuantity();
+
+        // 3. Current inventory fetch karo (Feign se)
+        InventoryDto currentInventory = inventoryFeignClient.getInventoryByProductId(productId);
+        if (currentInventory == null) {
+            throw new RuntimeException("Unable to fetch inventory (service down?)");
+        }
+
+        // 4. Inventory quantity wapas badhao
+        currentInventory.setQuantity(currentInventory.getQuantity() + orderedQty);
+
+        // 5. Inventory update karo
+        inventoryFeignClient.updateInventory(currentInventory);
+
+        // 6. Order delete karo
+        orderRepo.delete(order);
+
+        return "Order cancelled and inventory restored successfully";
     }
 }
 

@@ -19,5 +19,11 @@ public class OrderController {
         OrderResponse resp = orderService.createOrder(orderdto);
         return ResponseEntity.ok(resp);
     }
+    
+    @DeleteMapping("/cancel/{orderId}")
+    public ResponseEntity<String> cancelOrder(@PathVariable int orderId) {
+        String message = orderService.cancelOrder(orderId);
+        return ResponseEntity.ok(message);
+    }
 }
 

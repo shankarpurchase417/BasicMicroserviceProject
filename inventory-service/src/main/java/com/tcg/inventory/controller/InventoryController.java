@@ -41,7 +41,11 @@ public class InventoryController {
     public ResponseEntity<InventoryDto> updateInventory(@RequestBody InventoryDto inventoryDto) {
         return ResponseEntity.ok(inventoryService.updateInventory(inventoryDto));
     }
-
+    
+    @DeleteMapping("/delete/{inventoryId}")
+    public void deleteInventory(@PathVariable int inventoryId) {
+        inventoryService.deleteInventory(inventoryId);
+    }
 
 }
 

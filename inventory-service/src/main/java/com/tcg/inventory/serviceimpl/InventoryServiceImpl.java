@@ -60,6 +60,12 @@ public class InventoryServiceImpl implements InventoryService {
         return modelMapper.map(updated, InventoryDto.class);
     }
 
+	@Override
+	public void deleteInventory(int inventoryId) {
+		inventoryRepo.deleteById(inventoryId);
+		
+	}
+
 
 }
 

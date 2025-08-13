@@ -41,14 +41,14 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. Fetch Product
         ProductDto productdto = restTemplate.getForObject(
-            "http://localhost:8082/products/" + orderdto.getProductId(),
+            "http://localhost:8083/products/" + orderdto.getProductId(),
             ProductDto.class
         );
         if (productdto == null) throw new RuntimeException("Product not found");
 
         // 4. Fetch Inventory
         InventoryDto inventoryDto = restTemplate.getForObject(
-            "http://localhost:8083/inventory/product/" + orderdto.getProductId(),
+            "http://localhost:8084/inventory/product/" + orderdto.getProductId(),
             InventoryDto.class
         );
         if (inventoryDto == null || inventoryDto.getQuantity() < orderdto.getQuantity()) {
@@ -57,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 5. Update Inventory
         inventoryDto.setQuantity(inventoryDto.getQuantity() - orderdto.getQuantity());
-        restTemplate.put("http://localhost:8083/inventory/update", inventoryDto);
+        restTemplate.put("http://localhost:8084/inventory/update", inventoryDto);
 
         // 6. Calculate subtotal
         double subtotal = orderdto.getQuantity() * productdto.getPrice();
@@ -68,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 8. Get stock status
         String stockStatus = restTemplate.getForObject(
-            "http://localhost:8083/inventory/status/" + orderdto.getProductId(),
+            "http://localhost:8084/inventory/status/" + orderdto.getProductId(),
             String.class
         );
 

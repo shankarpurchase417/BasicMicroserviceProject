@@ -1,10 +1,13 @@
 package com.tcg.order.config;
-
+import java.time.Duration;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.modelmapper.convention.MatchingStrategies;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 import com.tcg.order.dto.OrderDto;
@@ -14,8 +17,18 @@ import com.tcg.order.entity.Order;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    @Primary
+    public RestTemplate defaultRestTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
+
+    @Bean
+    @Qualifier("userServiceRestTemplate")
+    public RestTemplate userServiceRestTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(2)) // ✅ connection timeout
+                .setReadTimeout(Duration.ofSeconds(5))    // ✅ read/response timeout
+                .build();
     }
 
     @Bean

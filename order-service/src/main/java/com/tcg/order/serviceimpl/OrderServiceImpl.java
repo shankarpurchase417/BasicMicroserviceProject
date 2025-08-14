@@ -2,8 +2,12 @@ package com.tcg.order.serviceimpl;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.tcg.order.dto.InventoryDto;
 import com.tcg.order.dto.OrderDto;
@@ -20,6 +24,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+ // ONLY for User Service call (5s read-timeout)
+    @Autowired
+    @Qualifier("userServiceRestTemplate")
+    private RestTemplate userRt;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -36,11 +45,21 @@ public class OrderServiceImpl implements OrderService {
         // 1. Map DTO to Entity (Id skipped automatically)
         Order order = modelMapper.map(orderdto, Order.class);
 
-        // 2. Fetch User
-        UserDto userdto = restTemplate.getForObject(
-            "http://localhost:8081/users/" + orderdto.getUserId(),
-            UserDto.class
-        );
+     // 2. Fetch User (5s read-timeout apply hoga)
+        UserDto userdto;
+        try {
+            userdto = userRt.getForObject(
+                "http://localhost:8081/users/" + orderdto.getUserId(),
+                UserDto.class
+            );
+        } catch (ResourceAccessException ex) {
+            // Read timeout hone par yahan aayega
+            throw new ResponseStatusException(
+                HttpStatus.GATEWAY_TIMEOUT,
+                "User-service timed out after 5s",
+                ex
+            );
+        }
         if (userdto == null) throw new RuntimeException("User not found");
 
         // 3. Fetch Product

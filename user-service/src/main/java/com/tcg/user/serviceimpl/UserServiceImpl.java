@@ -11,6 +11,9 @@ import com.tcg.user.entity.User;
 import com.tcg.user.repository.UserRepository;
 import com.tcg.user.service.UserService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
@@ -30,11 +33,33 @@ public class UserServiceImpl implements UserService {
 		
 		
 	}
+	
+	@Override
+	@CircuitBreaker(name = "userService", fallbackMethod = "getUserFallback")
+	@Retry(name = "userService")
 	public UserDto getUserById(Integer id) {
-        Optional<User> findUser = userrepo.findById(id);
-        
-       UserDto userdto = modelmapper.map(findUser, UserDto.class);
-       return userdto;
+	    Optional<User> findUser = userrepo.findById(id);
+
+	    if (findUser.isEmpty()) {
+	        throw new RuntimeException("User not found with id " + id);
+	    }
+
+	    return modelmapper.map(findUser.get(), UserDto.class);
+	}
+
+
+    /**
+     * Fallback method जब DB down या लगातार failure हो
+     */
+    public UserDto getUserFallback(Integer id, Throwable ex) {
+        System.out.println("Fallback executed due to: " + ex.getMessage());
+
+        UserDto fallbackUser = new UserDto();
+        fallbackUser.setUserId(id);
+        fallbackUser.setName("Default User");
+        fallbackUser.setAddress("Default address ");
+    
+        return fallbackUser;
     }
 	
 

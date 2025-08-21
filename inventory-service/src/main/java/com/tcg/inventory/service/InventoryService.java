@@ -13,6 +13,7 @@ public interface InventoryService {
     boolean deductStock(InventoryDto dto);
     
     InventoryDto updateInventory(InventoryDto inventoryDto);
+    
      void deleteInventory(int inventoryId);
 
 
